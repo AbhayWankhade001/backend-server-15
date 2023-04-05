@@ -8,6 +8,8 @@ import { BankDetails } from "../model/User.model.js";
 
 import bcrypt from "bcrypt"
 import cryptoRandomString from "crypto-random-string";
+import AWS from "aws-sdk";
+import multer from 'multer';
 const router2 = express.Router();
 
 
@@ -424,6 +426,79 @@ router2.put('/forgotPassword/updatePassword', async (req, res) => {
   }
 });
 
+
+
+
+
+
+// Set up AWS S3 configuration
+AWS.config.update({
+  bucketName: "clinginvoice",
+        region: "ap-southeast-2",
+        accessKeyId: 'AKIA3ACAYLO7SQIXYFPJ',
+        secretAccessKey: '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',
+});
+
+// Create an S3 instance
+const s3 = new AWS.S3();
+
+// Set up Multer middleware to handle file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+
+
+
+
+
+
+
+
+// Define a function to fetch a PDF file from S3 and send it as an email attachment
+async function sendPdfByEmail(pdfKey, recipientEmail, message) {
+  try {
+    // Fetch the PDF file from S3
+    const s3Params = {
+      Bucket: 'clinginvoice',
+      Key: pdfKey,
+    };
+    const pdfObject = await s3.getObject(s3Params).promise();
+
+    // Set up the email options
+    const mailOptions = {
+      from: 'abhaywankhade2004@gmil.com',
+      to: recipientEmail,
+      subject: 'PDF attachment',
+      text: message,
+      attachments: [
+        {
+          filename: pdfKey,
+          content: pdfObject.Body,
+        },
+      ],
+    };
+
+    // Send the email
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Email sent: ${info.messageId}`);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Define the API endpoint
+router2.post('/send-pdf', upload.single('pdf'), async (req, res) => {
+  try {
+    const pdfKey = req.body.pdfName;
+    const recipientEmail = req.body.email;
+    const message = req.body.message;
+    await sendPdfByEmail(pdfKey, recipientEmail, message);
+    res.status(200).send('Email sent successfully');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error sending email');
+  }
+});
 
   
 export default router2;
