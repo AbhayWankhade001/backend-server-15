@@ -499,6 +499,5 @@ router2.post('/send-pdf', upload.single('pdf'), async (req, res) => {
     res.status(500).send('Error sending email');
   }
 });
-
   
 export default router2;
