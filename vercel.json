@@ -18,6 +18,10 @@
     {
       "src": "/(.*)",
       "dest": "router/route.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "router/route2.js"
     }
   ]
 }
